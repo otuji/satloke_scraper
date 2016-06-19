@@ -1,4 +1,4 @@
-# coding: EUC-JP
+# coding: UTF-8
 
 import urllib2
 from bs4 import BeautifulSoup
@@ -8,7 +8,7 @@ id = 1023
 
 html = urllib2.urlopen("http://satloke.jp/datadetail.php?type=1&id=1023")
 
-soup = BeautifulSoup(html)
+soup = BeautifulSoup(html,"lxml")
 
 td_list = soup.find_all("td", id="data")
 
@@ -32,5 +32,6 @@ rating_update_date = td_list[17]
 
 team_emblem = td_list[19]
 
-
-print("%s",td_list)
+for td in td_list:
+	msg = td.encode('Shift_JIS')
+	print(msg)
