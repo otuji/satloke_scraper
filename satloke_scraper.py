@@ -15,30 +15,30 @@ base_url = 'http://satloke.jp/'
 # for team download
 mode = 'team'
 type = 1
-# last_number = 10037
-last_number = 1000
+last_number = 10052
+#last_number = 1000
 header = 'id,file_name,title,introduce,oke_num,control_oke,down_load,data_size,registory_datetime,rating,rating_update_num,rating_update_date\r'
 
 
 # for match download
-# mode = 'match'
+#mode = 'match'
 #type = 2
-# last_number = 372
-#header = 'id,file_name,title,introduce,down_load,data_size,registory_datetime\r'
+#last_number = 372
+#header = 'id,file_name,title,introduce,down_load,data_size,registory_datetime,score\r'
 
 
 # for replay download
-# mode = 'replay'
-# type = 3
-# last_number = 113
-#header = 'id,file_name,title,introduce,down_load,data_size,registory_datetime\r'
+#mode = 'replay'
+#type = 3
+#last_number = 113
+#header = 'id,file_name,title,introduce,down_load,data_size,registory_datetime,score\r'
 
 
 rep = re.compile(r"<[^>]*?>")
 
 os.mkdir(mode)
 
-csv = open(mode + "\\team.csv", "w")
+csv = open(mode + "\\" + mode + ".csv", "w")
 csv.write(header)
 
 for id in range(1, last_number + 1):
@@ -56,10 +56,10 @@ for id in range(1, last_number + 1):
     msg = td_list[0].extract().encode('Shift_JIS')
 
     file_name = rep.sub("", msg)
-    print(file_name)
+    print(file_name + ":" + str(len(td_list)))
 
-    # mach or replay 
-    if len(td_list) == 6:
+    # mach
+    if type == 2:
         title = rep.sub("", td_list[1].extract().encode('Shift_JIS'))
         introduce = rep.sub("", td_list[2].extract().encode('Shift_JIS'))
         oke_num = 'null'
@@ -67,8 +67,25 @@ for id in range(1, last_number + 1):
         down_load = rep.sub("", td_list[3].extract().encode('Shift_JIS'))
         file_size = rep.sub("", td_list[4].extract().encode('Shift_JIS'))
         registory_datetime = rep.sub("", td_list[5].extract().encode('Shift_JIS'))
+        if len(td_list) == 7:
+            score = rep.sub("", td_list[6].extract().encode('Shift_JIS'))
+        else:
+            score = 'null'
+    # replay
+    elif type == 3:
+        title = rep.sub("", td_list[1].extract().encode('Shift_JIS'))
+        introduce = rep.sub("", td_list[2].extract().encode('Shift_JIS'))
+        oke_num = 'null'
+        control_oke = 'null'
+        down_load = rep.sub("", td_list[3].extract().encode('Shift_JIS'))
+        file_size = rep.sub("", td_list[4].extract().encode('Shift_JIS'))
+        registory_datetime = rep.sub("", td_list[5].extract().encode('Shift_JIS'))
+        if len(td_list) == 7:
+            score = rep.sub("", td_list[6].extract().encode('Shift_JIS'))
+        else:
+            score = 'null'
     # team
-    else
+    else:
         title = rep.sub("", td_list[1].extract().encode('Shift_JIS'))
         introduce = rep.sub("", td_list[2].extract().encode('Shift_JIS'))
         oke_num = rep.sub("", td_list[3].extract().encode('Shift_JIS'))
@@ -87,9 +104,13 @@ for id in range(1, last_number + 1):
         rating = 'null'
         rating_update_num = 'null'
         rating_update_date_time = 'null'
-    
-    if len(td_list) == 6:
-        csv.write(str(id) + "," + file_name + "," + title + ",\"" + introduce.replace("\r","<br>") + "\"," + oke_num + "," + control_oke + "," + down_load + ",\"" + file_size + "\"," + registory_datetime + ",\"" + rating + "\"," + rating_update_num + "," + rating_update_date_time + "\r")
+        
+    # mach
+    if type == 2:
+        csv.write(str(id) + "," + file_name + "," + title + ",\"" + introduce.replace("\r","<br>") + "\"," + down_load + ",\"" + file_size + "\"," + registory_datetime + "," + score + "\r")
+    # replay
+    elif type == 3:
+        csv.write(str(id) + "," + file_name + "," + title + ",\"" + introduce.replace("\r","<br>") + "\"," + down_load + ",\"" + file_size + "\"," + registory_datetime + "," + score + "\r")
     else:
         csv.write(str(id) + "," + file_name + "," + title + ",\"" + introduce.replace("\r","<br>") + "\"," + oke_num + "," + control_oke + "," + down_load + ",\"" + file_size + "\"," + registory_datetime + ",\"" + rating + "\"," + rating_update_num + "," + rating_update_date_time + "\r")
 
@@ -106,37 +127,37 @@ for id in range(1, last_number + 1):
     binary_file.write(binaries)
     binary_file.close()
     
-    # save team emblem file
-    req = urllib2.Request(base_url + "draw_emblem.php?type=" + str(type) + "&id=" + str(id) +"&category=team")
-    response = urllib2.urlopen(req)
-    binaries = response.read()
-    emblem_file = open(mode + "\\" + str(id) + "\\emblem_team.png", "wb")
-    emblem_file.write(binaries)
-    emblem_file.close()
+    if type == 1:
+        # oke_num 1
+        if oke_num == "1":
+            image_range = 1
+        # oke_num 2 or 3
+        else:
+            image_range = 3
     
-    # oke_num 1
-    if oke_num == "1":
-        image_range = 1
-    # oke_num 2 or 3
-    else:
-        image_range = 3
-    
-    for index in range(0, range_end):
-        # emblem oke image
-        req = urllib2.Request(base_url + "draw_emblem.php?type=" + str(type) + "&id=" + str(id) +"&index=" + str(index) + "&category=oke")
+        # save team emblem file
+        req = urllib2.Request(base_url + "draw_emblem.php?type=" + str(type) + "&id=" + str(id) +"&category=team")
         response = urllib2.urlopen(req)
         binaries = response.read()
-        emblem_file = open(mode + "\\" + str(id) + "\\emblem_oke_" + str(index) + ".png", "wb")
+        emblem_file = open(mode + "\\" + str(id) + "\\emblem_team.png", "wb")
         emblem_file.write(binaries)
         emblem_file.close()
+        
+        for index in range(0, image_range):
+            # emblem oke image
+            req = urllib2.Request(base_url + "draw_emblem.php?type=" + str(type) + "&id=" + str(id) +"&index=" + str(index) + "&category=oke")
+            response = urllib2.urlopen(req)
+            binaries = response.read()
+            emblem_file = open(mode + "\\" + str(id) + "\\emblem_oke_" + str(index) + ".png", "wb")
+            emblem_file.write(binaries)
+            emblem_file.close()
 
-        # oke image
-        req = urllib2.Request(base_url + "draw_snapshot.php?type=" + str(type) + "&id=" + str(id) + "&index=" + str(index))
-        response = urllib2.urlopen(req)
-        images = response.read()
-        image_file = open(mode + "\\" + str(id) + "\\oke_" + str(index) + ".png", "wb")
-        image_file.write(images)
-        image_file.close()
-
+            # oke image
+            req = urllib2.Request(base_url + "draw_snapshot.php?type=" + str(type) + "&id=" + str(id) + "&index=" + str(index))
+            response = urllib2.urlopen(req)
+            images = response.read()
+            image_file = open(mode + "\\" + str(id) + "\\oke_" + str(index) + ".png", "wb")
+            image_file.write(images)
+            image_file.close()
 
 csv.close()
